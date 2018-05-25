@@ -10,10 +10,64 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ### Synopsis
-abc
+
 
 ### Data Processing
-abc
+The dataset comes from U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. The dataset records characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage starting in 1950 and end in Novemnber 2011.  
+  
+#### Downloading and Reading Data
+```{r download_read, echo=TRUE, cache=TRUE}
+# Downloading data
+url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+file_name <- "storm_data.csv.bz2"
+download.file(url, file_name)
+# Loading data into dataframe
+df <- read.csv(file_name)
+head(df)
+```
+
+
+#### Add Column TT_DAMAGE combining total damage of PROPDMG and CROPDMG
+```{r total_damage, echo=TRUE}
+# Add Column TT_DAMAGE combining total damage of PROPDMG and CROPDMG
+df$TT_PROPDMG <- df$PROPDMG * ifelse(toupper(df$PROPDMGEXP) == "H", 100, ifelse(toupper(df$PROPDMGEXP) == "K",  1000, ifelse(toupper(df$PROPDMGEXP) == "M",1000000, ifelse(toupper(df$PROPDMGEXP) == "B" ,1000000000 , 0) ) ) )
+
+df$TT_CROPDMG <- df$CROPDMG * ifelse(toupper(df$CROPDMGEXP) == "H", 100, ifelse(toupper(df$CROPDMGEXP) == "K",  1000, ifelse(toupper(df$CROPDMGEXP) == "M",1000000, ifelse(toupper(df$CROPDMGEXP) == "B" ,1000000000 , 0) ) ) )
+
+df$TT_DAMAGE <- df$TT_PROPDMG + df$TT_CROPDMG
+```
+
+#### Add Column TT_CASUALTY combining FATALITIES and INJURIES
+```{r total_casualty, echo=TRUE}
+df$TT_CASUALTY <- df$FATALITIES + df$INJURIES
+```
+
+#### Include only variables that are essential for the analysis
+Only EVTYPE, TT_CASUALTY, and TT_DAMAGE will be used for analysis.
+```{r clean_data, echo=TRUE}
+df_clean <- df[,c("EVTYPE", "TT_CASUALTY", "TT_DAMAGE")]
+head(df_clean)
+```
+
+#### Sum up Economic and Health effects by Event Type
+```{r processed_data, echo=TRUE}
+df_processed <- aggregate(.~EVTYPE, data = df_clean, sum)
+head(df_processed)
+```
 
 ### Results
-abc
+
+#### Which types of events are most harmful to population health?
+```{r top_health, echo=TRUE}
+top_10_harmful <- df_processed[order(-df_processed$TT_CASUALTY),][10:1,]
+par(mar=c(3, 7, 1,1))
+barplot(top_10_harmful$TT_CASUALTY, names.arg = top_10_harmful$EVTYPE, main="Top 10 Weather Events Harmful to Population Health", horiz=T, las=1, cex.names = 0.5, xlab="Total Casualty Count")
+```
+
+#### which types of events have the greatest economic consequences?
+```{r top_econ, echo=TRUE}
+top_10_econ <- df_processed[order(-df_processed$TT_DAMAGE),][10:1,]
+barplot(top_10_econ$TT_DAMAGE, names.arg = top_10_econ$EVTYPE, main="Top 10 Weather Events with Greatest Economic Consequences", horiz=T, las=1, cex.names = 0.5, xlab="Total Cost in Dollars")
+```
+
+
