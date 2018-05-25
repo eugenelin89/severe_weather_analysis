@@ -1,0 +1,19 @@
+---
+title: "Health and Economic Effects of Severe Weather Events in the United States"
+author: "Eugene Lin"
+date: '2018-05-25'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Synopsis
+abc
+
+### Data Processing
+abc
+
+### Results
+abc
